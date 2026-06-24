@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}首页 - 企业知识库{% endblock %}
+
+{% block body %}
+<div class="app-container" data-role="{{ current_user.role or 'employee' }}">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                    <rect width="48" height="48" rx="12" fill="url(#grad2)" />
+                    <path d="M14 34V14h6l6 12 6-12h6v20h-5V22l-5 10h-4l-5-10v12h-5z" fill="white" />
+                    <defs>
+                        <linearGradient id="grad2" x1="0" y1="0" x2="48" y2="48">
+                            <stop offset="0%" style="stop-color:#667eea" />
+                            <stop offset="100%" style="stop-color:#764ba2" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>知识库</span>
+            </div>
+            <div style="display: flex; gap: 4px;">
+                <button class="btn-icon theme-toggle" onclick="toggleTheme()" title="切换主题">
+                    <svg class="sun-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+                <button class="btn-icon" onclick="toggleSidebar()" title="收起侧栏">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 新建对话 -->
+        <button class="btn btn-new-chat" onclick="createNewSession()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="2" x2="8" y2="14" />
+                <line x1="2" y1="8" x2="14" y2="8" />
+            </svg>
+            新建对话
+        </button>
+
+        <!-- 会话列表 -->
+        <div class="session-list" id="sessionList">
+            <div class="loading-text">加载中...</div>
+        </div>
+
+        <!-- 底部菜单 -->
+        <div class="sidebar-footer">
+            <div class="sidebar-actions-top">
+                <button class="btn-icon" onclick="showProfileModal()" title="个人信息">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                    </svg>
+                </button>
+                <button class="btn-icon" onclick="showDocPanel()" title="文档管理">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                </button>
+                <a class="btn-icon admin-only" href="/dashboard" target="_blank" title="大屏"
+                    style="text-decoration:none;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                </a>
+                <a class="btn-icon admin-only" href="#" onclick="page2admin()" title="管理后台"
+                    style="text-decoration:none;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                </a>
+            </div>
+            <div class="sidebar-user-bottom">
+                <div class="user-info">
+                    <span class="user-avatar">{{ current_user.username[0] | upper }}</span>
+                    <span class="user-name">{{ current_user.username }}</span>
+                </div>
+                <button class="btn-icon logout-btn" onclick="doLogout()" title="退出登录">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 侧栏展开按钮（收起时显示） -->
+        <button class="btn-icon sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="展开侧栏">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        </button>
+
+
+        <!-- 对话区域 -->
+        <div class="chat-area" id="chatArea">
+            <!-- 欢迎页 -->
+            <div class="welcome" id="welcomeSection">
+                <div class="welcome-icon">
+                    <svg width="64" height="64" viewBox="0 0 48 48" fill="none">
+                        <rect width="48" height="48" rx="12" fill="url(#grad3)" />
+                        <path d="M14 34V14h6l6 12 6-12h6v20h-5V22l-5 10h-4l-5-10v12h-5z" fill="white" />
+                        <defs>
+                            <linearGradient id="grad3" x1="0" y1="0" x2="48" y2="48">
+                                <stop offset="0%" style="stop-color:#667eea" />
+                                <stop offset="100%" style="stop-color:#764ba2" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h2>欢迎使用企业知识库</h2>
+                {% if current_user.role == 'admin' %}
+                <p>上传文档，然后向我提问任何相关问题</p>
+                {% else %}
+                <p>基于已有文档，向我提问任何相关问题</p>
+                {% endif %}
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="showDocPanel()">📄 {% if current_user.role == 'admin' %}上传文档{%
+                        else %}查看已上传的文档{% endif %}</button>
+                    <button class="quick-btn" onclick="askSample('请帮我总结知识库中的关键信息', '总结信息')">💡 总结信息</button>
+                    <button class="quick-btn" onclick="askSample('知识库中有哪些文档？', '查看文档')">📋 查看文档</button>
+                </div>
+            </div>
+
+            <!-- 消息列表 -->
+            <div class="messages" id="chatMessages"></div>
+
+            <!-- 输入区域 -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea id="userInput" placeholder="输入你的问题... (Enter 发送, Shift+Enter 换行)" rows="1"></textarea>
+                    <button class="btn-send" id="sendBtn" onclick="sendMessage()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- 个人信息模态框 -->
+<div class="modal-overlay" id="profileModal" onclick="if(event.target===this)hideProfileModal()">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>个人信息</h3>
+            <button class="btn-icon" onclick="hideProfileModal()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>工号</label>
+                <input type="text" id="profileEmployeeId" readonly class="input-readonly" />
+            </div>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="profileUsername" readonly class="input-readonly" />
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="profileEmail" placeholder="请输入邮箱" />
+            </div>
+            <div class="form-group">
+                <label>手机号码</label>
+                <input type="tel" id="profilePhone" placeholder="请输入手机号码" />
+            </div>
+            <div class="form-divider"></div>
+            <p class="form-section-title">修改密码（不修改请留空）</p>
+            <div class="form-group">
+                <label>旧密码</label>
+                <input type="password" id="profileOldPassword" placeholder="请输入旧密码" />
+            </div>
+            <div class="form-group">
+                <label>新密码</label>
+                <input type="password" id="profileNewPassword" placeholder="8-12位，字母/数字/特殊字符@._$" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <div id="profileMessage" class="auth-message"></div>
+            <button class="btn btn-primary btn-block" onclick="saveProfile()">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<!-- 文档预览模态框 -->
+<div class="modal-overlay" id="documentModal" onclick="if(event.target===this)hideDocumentModal()">
+    <div class="modal-card doc-preview-card"
+        style="max-width: 900px; width: 90%; height: 85vh; display: flex; flex-direction: column;">
+        <div class="modal-header">
+            <h3 id="docPreviewTitle">文档预览</h3>
+            <button class="btn-icon" onclick="hideDocumentModal()">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body" style="flex: 1; padding: 0; overflow: hidden; background: #f5f7fa; position: relative;">
+            <div id="docLoading"
+                style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
+                加载中...
+            </div>
+            <iframe id="docPreviewFrame" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
+            <pre id="docPreviewText"
+                style="width: 100%; height: 100%; margin: 0; padding: 20px; overflow: auto; display: none; white-space: pre-wrap; font-family: monospace; font-size: 14px; color: #333; box-sizing: border-box;"></pre>
+        </div>
+    </div>
+</div>
+
+<!-- 文档管理抽屉 (带遮罩) -->
+<div class="modal-overlay" id="docModalOverlay" onclick="if(event.target===this)hideDocPanel()">
+    <div class="doc-panel" id="docPanel" onclick="event.stopPropagation()">
+        <div class="doc-panel-header">
+            <h3>文档管理</h3>
+            <button class="btn-icon" onclick="hideDocPanel()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+        <div class="doc-upload admin-only">
+            <input type="file" id="fileInput" accept=".txt,.doc,.docx,.pdf" onchange="uploadFile()"
+                style="display:none">
+            <button class="btn btn-upload" onclick="document.getElementById('fileInput').click()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                上传文档
+            </button>
+            <p class="upload-hint">支持 TXT、DOC、DOCX、PDF，最大 16MB</p>
+        </div>
+        <div id="uploadProgress" class="upload-progress" style="display:none">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="uploadStatus">正在上传...</p>
+        </div>
+        <div class="doc-list" id="docList">
+            <div class="loading-text">加载中...</div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}?v={{ range(1, 100000) | random }}"></script>
+{% endblock %}

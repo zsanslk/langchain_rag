@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}登录 - 企业知识库{% endblock %}
+
+{% block body %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo-icon">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect width="48" height="48" rx="12" fill="url(#grad1)" />
+                    <path d="M14 34V14h6l6 12 6-12h6v20h-5V22l-5 10h-4l-5-10v12h-5z" fill="white" />
+                    <defs>
+                        <linearGradient id="grad1" x1="0" y1="0" x2="48" y2="48">
+                            <stop offset="0%" style="stop-color:#667eea" />
+                            <stop offset="100%" style="stop-color:#764ba2" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1>企业知识库</h1>
+            <p class="subtitle">基于 AI 的智能文档问答系统</p>
+        </div>
+
+        <!-- 登录表单 -->
+        <div id="loginForm" class="auth-form active">
+            <div class="form-group">
+                <label for="loginUsername">用户名</label>
+                <input type="text" id="loginUsername" placeholder="请输入用户名" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">密码</label>
+                <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+            </div>
+            <button id="loginBtn" class="btn btn-primary btn-block" onclick="doLogin()">登 录</button>
+            <p class="switch-text">还没有账号？<a href="#" onclick="switchForm('register')">立即注册</a></p>
+        </div>
+
+        <!-- 注册表单 -->
+        <div id="registerForm" class="auth-form">
+            <div class="form-group">
+                <label for="regUsername">用户名</label>
+                <input type="text" id="regUsername" placeholder="3-50个字符" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="regEmail">邮箱（可选）</label>
+                <input type="email" id="regEmail" placeholder="请输入邮箱" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="regPassword">密码</label>
+                <input type="password" id="regPassword" placeholder="8-12位，字母/数字/特殊字符@._$" autocomplete="new-password">
+            </div>
+            <button id="regBtn" class="btn btn-primary btn-block" onclick="doRegister()">注 册</button>
+            <p class="switch-text">已有账号？<a href="#" onclick="switchForm('login')">返回登录</a></p>
+        </div>
+
+        <div id="authMessage" class="auth-message"></div>
+    </div>
+</div>
+
+<script>
+    function switchForm(type) {
+        document.getElementById('loginForm').classList.toggle('active', type === 'login');
+        document.getElementById('registerForm').classList.toggle('active', type === 'register');
+        document.getElementById('authMessage').textContent = '';
+    }
+
+    function showMessage(msg, isError) {
+        const el = document.getElementById('authMessage');
+        el.textContent = msg;
+        el.className = 'auth-message ' + (isError ? 'error' : 'success');
+    }
+
+    async function doLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        if (!username || !password) { showMessage('请填写用户名和密码', true); return; }
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.code === 200) {
+                showMessage('登录成功，正在跳转...', false);
+                setTimeout(() => window.location.href = '/', 500);
+            } else {
+                showMessage(data.message || '登录失败', true);
+            }
+        } catch (e) {
+            showMessage('网络错误，请重试', true);
+        }
+    }
+
+    async function doRegister() {
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value.trim();
+        if (!username || !password) { showMessage('请填写用户名和密码', true); return; }
+
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, email })
+            });
+            const data = await res.json();
+            if (data.code === 200) {
+                showMessage('注册成功，请登录', false);
+                setTimeout(() => switchForm('login'), 1000);
+            } else {
+                showMessage(data.message || '注册失败', true);
+            }
+        } catch (e) {
+            showMessage('网络错误，请重试', true);
+        }
+    }
+
+    // Enter 键触发登录/注册
+    document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('regPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+</script>
+{% endblock %}

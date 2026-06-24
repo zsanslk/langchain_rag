@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双路混合检索原理解析 (FAISS + BM25)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <!-- 引入 Plotly.js 用于 3D 绘图 -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-1: #3b82f6; /* Blue */
+            --accent-2: #10b981; /* Green */
+            --accent-3: #f59e0b; /* Yellow */
+            --accent-4: #ef4444; /* Red */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景装饰 */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            animation: float 20s infinite ease-in-out alternate;
+        }
+        .orb-1 { width: 500px; height: 500px; background: rgba(59, 130, 246, 0.2); top: -100px; left: -100px; }
+        .orb-2 { width: 600px; height: 600px; background: rgba(139, 92, 246, 0.2); bottom: -200px; right: -100px; animation-delay: -10s;}
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+        }
+        
+        /* 卡片延迟动画 */
+        .card:nth-child(1) { animation-delay: 0.1s; grid-column: 1 / -1; } /* 3D图占据全宽 */
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; grid-column: 1 / -1; }
+
+        /* 卡片颜色主题 */
+        .card.faiss::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .card.bm25::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .card.parallel::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .card.fusion::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tag {
+            padding: 0.2rem 0.6rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.1);
+        }
+
+        p, li {
+            line-height: 1.7;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight {
+            color: #fbbf24;
+            font-weight: 700;
+        }
+
+        .highlight-red { color: #ef4444; font-weight: 700; }
+        .highlight-green { color: #10b981; font-weight: 700; }
+
+        /* 3D 图表容器 */
+        #plot3d {
+            width: 100%;
+            height: 500px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.2);
+            margin-top: 1rem;
+        }
+
+        .badge-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .badge.b-red span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444; }
+        .badge.b-green span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981; }
+        .badge.b-blue span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; }
+
+        /* 公式展示 */
+        .formula {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            border: 1px dashed rgba(255,255,255,0.2);
+            color: #a78bfa;
+            margin: 1.5rem 0;
+        }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .grid-container { grid-template-columns: 1fr; }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <header>
+        <h1>双路混合检索原理解析</h1>
+        <p>揭秘 FAISS 与 BM25 并行运作的内部机制：当用户输入超长句子时，系统如何抽丝剥茧找到正确答案。</p>
+    </header>
+
+    <div class="grid-container">
+        
+        <!-- 格子 1：3D 向量空间展示 -->
+        <div class="card">
+            <h2 class="card-title">🌐 阶段一：知识库在三维空间的降维打击 <span class="tag" style="color: #60a5fa;">FAISS 视角</span></h2>
+            <p>在这个由大模型构建的向量空间中，意思相近的句子会靠在一起。但是，当用户输入<span class="highlight-red">带有大量废话的长问题</span>时，问题向量会被这些“噪音”拉离正确的文档，导致**语义稀疏化**。</p>
+            
+            <div class="badge-container">
+                <div class="badge b-red"><span></span>用户问题向量 (被废话拉偏)</div>
+                <div class="badge b-green"><span></span>目标文档 A (苹果树褐斑病)</div>
+                <div class="badge b-blue"><span></span>干扰文档 (其他病害/植物)</div>
+            </div>
+
+            <p style="font-size: 0.9rem; color: #94a3b8;">🖱️ 提示：你可以使用鼠标左键拖动旋转视角，滚轮缩放。</p>
+            <div id="plot3d"></div>
+        </div>
+
+        <!-- 格子 1.5：768 维降维解析 -->
+        <div class="card" style="grid-column: 1 / -1; animation-delay: 0.15s;">
+            <h2 class="card-title">🔍 番外篇：为什么 768 维向量可以画在 3D 坐标系里？</h2>
+            <p><strong>其实，真正的“战斗”是发生在人类无法想象的 768 维超高维空间里的。</strong></p>
+            <ul>
+                <li><span class="highlight">不可解释的隐式特征：</span> 768个维度并不对应“苹果”、“植物”等具体概念。它是神经网络提取出的<strong>隐式语义特征（Latent Features）</strong>。</li>
+                <li><span class="highlight">分布式表示 (Distributed Representation)：</span> 就像是做蛋糕，糖和面的味道均匀分布在整块蛋糕里。一句话的语义被打散，由 768 个数字的<strong>特定组合模式</strong>来共同决定。单看任何一个维度都没有意义。</li>
+                <li><span class="highlight">降维比喻：</span> 网页上的 3D 坐标系，其实是通过降维算法（如 PCA 或 UMAP），把 768 维数据“拍扁投影”到了 3 个维度上。<strong>目的只有一个：让我们能用肉眼直观感受到“语义距离”的远近！</strong></li>
+            </ul>
+        </div>
+
+        <!-- 格子 2：FAISS 的困境 -->
+        <div class="card faiss">
+            <h2 class="card-title">⚠️ 第一路：FAISS 遭遇“语义稀疏”</h2>
+            <p><strong>假设用户提问：</strong><br> <em style="color: #94a3b8;">“我昨天去果园突然发现我家种的那个<span class="highlight">苹果树</span>不知道怎么回事，它的<span class="highlight">叶片边缘</span>开始出现<span class="highlight">发黄</span>的现象，并且慢慢变得<span class="highlight">干枯</span>，请问是怎么回事？”</em></p>
+            <ul>
+                <li><strong>向量化的困境：</strong>大模型(text2vec) 会把上面的所有字（包括“昨天”、“突然发现”、“怎么回事”）全揉进一个固定维度的向量里。</li>
+                <li><strong>得分变低：</strong>因为噪音太多，“苹果”、“发黄”等关键语义被稀释，导致算出来的余弦相似度极低。</li>
+                <li><strong>结果：</strong><span class="highlight-red">FAISS 得分：0.42</span> （低于 0.45 的及格线，文档 A 面临被淘汰的危险）。</li>
+            </ul>
+        </div>
+
+        <!-- 格子 3：BM25 的破局 -->
+        <div class="card bm25">
+            <h2 class="card-title">✨ 第二路：BM25 的“关键词雷达”</h2>
+            <p>与此同时，另一个线程正在用传统算法(TF-IDF) 扫描文档，它根本“听不懂”你在说什么，但它懂数学！</p>
+            <ul>
+                <li><strong>切词去废话：</strong>问题被切碎，由于“我”、“发现”、“的”在知识库中随处可见，权重(IDF)被判为 <span class="highlight-red">0</span>。</li>
+                <li><strong>锁定高价值词汇：</strong>系统发现知识库中极少出现 <span class="highlight">“苹果树”</span>、<span class="highlight">“干枯”</span>，于是赋予它们极高的权重。</li>
+                <li><strong>精准碰撞：</strong>带着高权重词去撞击文档，发现文档 A 疯狂命中这些高价值词！</li>
+                <li><strong>结果：</strong><span class="highlight-green">BM25 赋予文档 A 满额最高分</span>。</li>
+            </ul>
+        </div>
+
+        <!-- 格子 4：多线程并行 -->
+        <div class="card parallel">
+            <h2 class="card-title">⚡ 架构优势：为什么要“同时进行”？</h2>
+            <p>导师疑惑：为什么要同步进行，而不是先用 BM25 筛选，再用 FAISS？</p>
+            <p><strong>答案：为了互补与速度，打破木桶效应。</strong></p>
+            <ul>
+                <li>如果串行：FAISS 当先锋，0.42分就把文档A淘汰了，BM25 连看的机会都没有。</li>
+                <li>如果串行：BM25 当先锋，遇到同义词（比如“马铃薯”搜“土豆”）它就瞎了，会淘汰掉 FAISS 本能找到的语义文档。</li>
+                <li><strong>并行策略：</strong>通过 <code>ThreadPoolExecutor</code> 让它俩互不干扰地翻遍整个数据库，取出各自的高分结果取**并集**。不仅互补，检索时间还缩小了一半！</li>
+            </ul>
+        </div>
+
+        <!-- 格子 5：加权融合 -->
+        <div class="card fusion">
+            <h2 class="card-title">🤝 最终决战：加权融合与起死回生</h2>
+            <p>两个线程带着各自的成绩单在主线程汇合。系统按照你的代码逻辑开始最终清算：</p>
+            
+            <div class="formula">
+                Final Score = Vector_Score + (BM25_Score / Max_BM25) * 0.05
+            </div>
+
+            <ul>
+                <li><strong>1. 提取 FAISS 得分：</strong> 文档 A 虽然被废话干扰，但在 768 维空间中仍有基础余弦相似度：<code>Vector_Score = 0.42</code>。</li>
+                <li><strong>2. 提取 BM25 得分：</strong> 文档 A 完美命中罕见病害名词，词频得分全场最高：<code>BM25_Score = 12.5</code>。</li>
+                <li><strong>3. 归一化计算：</strong> <code>(12.5 / 12.5) * 0.05 = 0.05</code> （拿满最高 0.05 的加成）。</li>
+                <li><strong>4. 最终总分求和：</strong> <code>Final Score = 0.42 + 0.05 = <span class="highlight-green">0.47</span></code>。</li>
+            </ul>
+            <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+                <strong>💡 及格线判定 (Threshold = 0.45)：</strong> <br>
+                最终得分 <code>0.47 &gt; 0.45</code>。判定通过！文档 A 被成功召回并喂给大模型生成最终回答。
+            </div>
+            <p style="font-size: 1.2rem; margin-top: 1.5rem; text-align: center;">
+                🎉 奇迹发生了！原本因为废话太多导致 FAISS 得分不及格的文档 A，<br>
+                <strong>在 BM25 满额词频奖励的拉扯下，成功越过了 0.45 的及格阈值！</strong><br>
+                这就是双路同时进行的终极意义所在。
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        // 渲染 3D 向量空间散点图
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 目标文档 A (语义强匹配区域)
+            const docA = { x: [7], y: [7], z: [7], text: ['文档 A<br>(苹果树/发黄/干枯)'], color: '#10b981', symbol: 'diamond' };
+            
+            // 干扰文档 B (无关病害)
+            const docB = { x: [-5], y: [5], z: [-2], text: ['文档 B<br>(西红柿晚疫病)'], color: '#3b82f6', symbol: 'circle' };
+            
+            // 干扰文档 C (部分语义相近，植物变黄)
+            const docC = { x: [4], y: [6], z: [3], text: ['文档 C<br>(植物老叶变黄)'], color: '#3b82f6', symbol: 'circle' };
+
+            // 完美的简短查询 (如果用户只问：苹果树叶子发黄干枯)
+            const perfectQuery = { x: [7.5], y: [6.5], z: [7.5], text: ['理想短查询<br>(直奔目标)'], color: '#f59e0b', symbol: 'star' };
+
+            // 实际被稀释的长查询 (被废话噪音拉离了目标文档 A)
+            const realQuery = { x: [2], y: [2], z: [2], text: ['用户的长问题<br>(被废话拉偏，远离文档A)'], color: '#ef4444', symbol: 'x' };
+
+            const createTrace = (point, size = 15) => ({
+                x: point.x,
+                y: point.y,
+                z: point.z,
+                mode: 'markers+text',
+                marker: { 
+                    size: size, 
+                    color: point.color,
+                    symbol: point.symbol,
+                    line: { color: 'rgba(255,255,255,0.5)', width: 2 }
+                },
+                text: point.text,
+                textposition: 'top center',
+                textfont: {
+                    family: 'Noto Sans SC',
+                    size: 13,
+                    color: '#f8fafc'
+                },
+                type: 'scatter3d',
+                name: point.text[0].split('<')[0]
+            });
+
+            // 原点(知识库中心) 辅助线参考
+            const origin = {
+                x: [0], y: [0], z: [0],
+                mode: 'markers', marker: { size: 5, color: '#94a3b8' }, type: 'scatter3d', hoverinfo: 'none', showlegend: false
+            };
+
+            const data = [
+                createTrace(docA, 18),
+                createTrace(docB),
+                createTrace(docC),
+                createTrace(perfectQuery, 12),
+                createTrace(realQuery, 18),
+                origin
+            ];
+
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: {l: 0, r: 0, b: 0, t: 0},
+                scene: {
+                    xaxis: { title: '', showgrid: true, zeroline: true, gridcolor: 'rgba(255,255,255,0.1)', zerolinecolor: 'rgba(255,255,255,0.3)', backgroundcolor: 'rgba(0,0,0,0)'},
+                    yaxis: { title: '', showgrid: true, zeroline: true, gridcolor: 'rgba(255,255,255,0.1)', zerolinecolor: 'rgba(255,255,255,0.3)', backgroundcolor: 'rgba(0,0,0,0)'},
+                    zaxis: { title: '', showgrid: true, zeroline: true, gridcolor: 'rgba(255,255,255,0.1)', zerolinecolor: 'rgba(255,255,255,0.3)', backgroundcolor: 'rgba(0,0,0,0)'},
+                    camera: {
+                        eye: {x: 1.5, y: -1.5, z: 0.5}
+                    }
+                },
+                showlegend: false,
+                hovermode: 'closest'
+            };
+
+            const config = {
+                displayModeBar: false,
+                responsive: true
+            };
+
+            Plotly.newPlot('plot3d', data, layout, config);
+        });
+    </script>
+</body>
+</html>

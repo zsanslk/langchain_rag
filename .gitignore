@@ -1,0 +1,51 @@
+# 环境变量
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+document_x
+local_models
+
+# 虚拟环境
+venv/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 上传文件
+uploads/*
+!uploads/.gitkeep
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 数据库
+*.db
+*.sqlite3
+
+# AI & RAG 索引/模型
+*.faiss
+*.pkl
+*.index
+
+# 日志
+*.log
+logs/
+
+# CodeGraph
+.codegraph/

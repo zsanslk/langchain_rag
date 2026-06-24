@@ -1,0 +1,27 @@
+# Web 框架
+Flask==2.3.3
+Flask-Login==0.6.2
+Flask-CORS==4.0.0
+Werkzeug==2.3.7
+
+# 数据库
+SQLAlchemy==2.0.21
+PyMySQL==1.1.0
+
+# LangChain 相关
+langchain==0.1.0
+langchain-community==0.0.20
+langchain-core==0.1.20
+langchain-text-splitters==0.0.1
+
+# 文档处理
+PyPDF2==3.0.1
+python-docx==1.1.0
+chardet==5.2.0
+
+# AI 模型
+httpx==0.25.2
+
+# 工具
+python-dotenv==1.0.0
+bcrypt==4.1.1

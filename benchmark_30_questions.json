@@ -1,0 +1,182 @@
+[
+  {
+    "query": "企业知识库适用于哪些人员？",
+    "expected_keywords": ["在职员工", "实习生", "外部合作人员"]
+  },
+  {
+    "query": "知识库的使用原则有哪些？",
+    "expected_keywords": ["真实性原则", "完整性原则", "时效性原则", "保密性原则"]
+  },
+  {
+    "query": "制度更新后需要在多长时间内更新文档？",
+    "expected_keywords": ["3个工作日", "更新对应文档"]
+  },
+  {
+    "query": "知识库中文档分为哪些类别？",
+    "expected_keywords": ["制度流程类", "产品业务类", "技术研发类", "市场运营类"]
+  },
+  {
+    "query": "文档命名的统一格式是什么？",
+    "expected_keywords": ["分类", "名称", "版本号", "日期"]
+  },
+  {
+    "query": "普通员工在知识库里有什么权限？",
+    "expected_keywords": ["普通员工", "公开及本部门文档", "编辑个人负责"]
+  },
+  {
+    "query": "管理员在知识库中的职责是什么？",
+    "expected_keywords": ["整体知识库维护", "权限分配", "违规内容处理"]
+  },
+  {
+    "query": "涉密文档有什么限制要求？",
+    "expected_keywords": ["指定人员查看", "严禁私自转发", "截图外传"]
+  },
+  {
+    "query": "违反知识库规范会有什么后果？",
+    "expected_keywords": ["追究责任", "法律责任", "损失"]
+  },
+  {
+    "query": "修改重要文档之前应该怎么做？",
+    "expected_keywords": ["旧版存档", "避免误操作", "丢失信息"]
+  },
+  {
+    "query": "登录失败应该怎么处理？",
+    "expected_keywords": ["账号密码", "网络正常", "联系客服解锁"]
+  },
+  {
+    "query": "数据导出的操作路径是什么？",
+    "expected_keywords": ["设置", "数据管理", "Excel", "PDF"]
+  },
+  {
+    "query": "付款后多久能开通服务？",
+    "expected_keywords": ["1-2个工作日", "开通"]
+  },
+  {
+    "query": "电子发票需要几天才能收到？",
+    "expected_keywords": ["电子发票", "3-5个工作日", "发出"]
+  },
+  {
+    "query": "售后服务的工作时间是什么？",
+    "expected_keywords": ["工作日", "9:00-18:00", "紧急问题"]
+  },
+  {
+    "query": "康泰瑞的企业愿景是什么？",
+    "expected_keywords": ["全球影响力", "创新驱动", "植物药", "引领者"]
+  },
+  {
+    "query": "康泰瑞的企业使命是什么？",
+    "expected_keywords": ["取自然之精粹", "筑生命之康泰"]
+  },
+  {
+    "query": "PRIDE核心价值观代表什么？",
+    "expected_keywords": ["Patient First", "Rigor", "Innovation", "Dedication"]
+  },
+  {
+    "query": "康泰瑞的商业模式是什么？",
+    "expected_keywords": ["一体两翼", "处方药", "创新药", "大健康"]
+  },
+  {
+    "query": "瑞心通的通用名称和适应症是什么？",
+    "expected_keywords": ["三七总皂苷", "冻干粉针", "心绞痛", "脑梗死"]
+  },
+  {
+    "query": "瑞心通的用法用量是什么？",
+    "expected_keywords": ["肌肉注射", "100mg", "静脉滴注", "40滴/分钟"]
+  },
+  {
+    "query": "瑞心通的禁忌症有哪些？",
+    "expected_keywords": ["过敏者禁用", "出血性脑卒中", "孕妇"]
+  },
+  {
+    "query": "瑞心通的作用机制是什么？",
+    "expected_keywords": ["血小板", "TXA2", "eNOS", "微循环"]
+  },
+  {
+    "query": "KTR-101瑞糖平的适应症是什么？",
+    "expected_keywords": ["糖尿病周围神经病变", "DPN", "麻木", "针刺痛"]
+  },
+  {
+    "query": "KTR-101的靶点机制是什么？",
+    "expected_keywords": ["醛糖还原酶", "ALR2", "多元醇代谢通路", "山梨醇"]
+  },
+  {
+    "query": "严重不良事件的上报时限是多久？",
+    "expected_keywords": ["24小时", "72小时", "死亡", "危及生命"]
+  },
+  {
+    "query": "康泰瑞每年研发投入占营业收入的比例是多少？",
+    "expected_keywords": ["12%", "15%", "研发"]
+  },
+  {
+    "query": "公司的三地协同研发网络包括哪些？",
+    "expected_keywords": ["昆明", "上海", "波士顿"]
+  },
+  {
+    "query": "KTR-102的靶点和适应症是什么？",
+    "expected_keywords": ["ALDH2", "乙醛脱氢酶", "缺血性卒中", "再灌注损伤"]
+  },
+  {
+    "query": "超临界二氧化碳萃取技术的特点是什么？",
+    "expected_keywords": ["超临界", "CO2", "低温", "无毒"]
+  },
+  {
+    "query": "AIDD平台的数据库收录了多少个化合物？",
+    "expected_keywords": ["15万", "天然化合物", "三维分子结构"]
+  },
+  {
+    "query": "ALCOA+数据完整性原则包括哪些？",
+    "expected_keywords": ["可追溯", "清晰可读", "同步记录", "原始性", "准确性"]
+  },
+  {
+    "query": "ELN和LIMS在研发中心的作用是什么？",
+    "expected_keywords": ["电子实验记录本", "实验室信息管理系统", "审计追踪"]
+  },
+  {
+    "query": "动物实验必须遵循什么伦理规范？",
+    "expected_keywords": ["IACUC", "3R原则", "替代", "减少", "优化"]
+  },
+  {
+    "query": "公司的专利布局策略是什么？",
+    "expected_keywords": ["立体专利布局", "马库什", "专利丛林", "PCT"]
+  },
+  {
+    "query": "公司通过了哪些质量认证？",
+    "expected_keywords": ["GMP", "ISO 9001", "ISO 14001", "GSP"]
+  },
+  {
+    "query": "质量风险管理使用哪些评估工具？",
+    "expected_keywords": ["FMEA", "HACCP", "ICH Q9"]
+  },
+  {
+    "query": "公司有哪些核心生产车间？",
+    "expected_keywords": ["无菌冻干粉针", "口服固体制剂", "植物单体提取", "中药饮片"]
+  },
+  {
+    "query": "MES系统在生产中的作用是什么？",
+    "expected_keywords": ["制造执行系统", "电子化", "电子签名", "批记录"]
+  },
+  {
+    "query": "偏差管理的处理流程是什么？",
+    "expected_keywords": ["发现偏差", "原因根除调查", "CAPA", "纠正与预防措施"]
+  },
+  {
+    "query": "产品放行审核需要审查哪些内容？",
+    "expected_keywords": ["批生产记录", "检验报告", "偏差", "环境监测"]
+  },
+  {
+    "query": "瑞心通的有效成分纯度内控标准是多少？",
+    "expected_keywords": ["95.0%", "102.0%", "高于药典"]
+  },
+  {
+    "query": "制药废水的日处理量是多少？",
+    "expected_keywords": ["2000吨", "生化", "深度处理", "环保局"]
+  },
+  {
+    "query": "对高活性药物车间有什么防护要求？",
+    "expected_keywords": ["正压防护头罩", "OEB", "职业暴露"]
+  },
+  {
+    "query": "中药材种植管理遵循什么规范？",
+    "expected_keywords": ["GAP", "药材", "农药", "重金属"]
+  }
+]
