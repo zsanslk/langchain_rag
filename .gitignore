@@ -50,5 +50,6 @@ logs/
 # CodeGraph
 .codegraph/
 
-# 
+#
 task
+app.py
